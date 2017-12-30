@@ -15,8 +15,8 @@ type getRequest struct {
 	CMD	byte
 	RSV byte
 	ATYP byte
-	ADDR []byte
-	PORT []byte
+	ADDR string
+	PORT string
 }
 
 type getReply struct {
@@ -94,8 +94,14 @@ func (zgr *getRequest) toByteArr() []byte {
 	barr = append(barr,zgr.CMD)
 	barr = append(barr,zgr.RSV)
 	barr = append(barr,zgr.ATYP)
-	barr = iappender(barr, zgr.ADDR)
-	barr = iappender(barr, zgr.PORT)
+	for i:=0;i<len(zgr.ADDR);i++ {
+		barr = append(barr, byte(zgr.ADDR[i]-'0'))
+	}
+	for i:=0;i<len(zgr.PORT);i++ {
+		barr = append(barr, byte(zgr.PORT[i]-'0'))
+	}
+	//barr = iappender(barr, zgr.ADDR)
+	//barr = iappender(barr, zgr.PORT)
 	//tmpcnv := make([]byte, 4)
 	/*binary.LittleEndian.PutUint32(tmpcnv, zgr.datalength)
 	barr = iappender(barr, tmpcnv)

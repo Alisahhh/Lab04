@@ -24,7 +24,6 @@ func Int32ToBytes(i int) []byte {
 
 func main() {
 	l, err := net.Listen("tcp", ":8080")
-
 	checkError(err)
 	cnt:=0
 	for{

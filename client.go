@@ -10,6 +10,7 @@ import (
 
 func checkError(err error) {
 	if err != nil {
+		fmt.Println("13")
 		fmt.Println(err.Error())
 		os.Exit(1)
 	}
@@ -36,6 +37,7 @@ func main() {
 			conn.Close()
 			continue
 		}
+		fmt.Println(cnt)
 		go handleRequest(conn)
 	}
 }
@@ -61,7 +63,7 @@ func handleRequest(conn net.Conn){
 	}
 	//auth success
 
-	fmt.Println("auth success")
+	//fmt.Println("auth success")
 	var b []byte
 	b = make([]byte, 1024*1024)
 	n, err := conn.Read(b)
@@ -78,7 +80,7 @@ func handleRequest(conn net.Conn){
 		}
 		defer server.Close()
 		b = b[:n]
-		fmt.Println(b)
+
 		//send addr and port
 		buf = Int32ToBytes(n)
 		_, err = server.Write(buf);
@@ -94,56 +96,46 @@ func handleRequest(conn net.Conn){
 			b = make([]byte, 1024*1024)
 			for {
 				n, err := conn.Read(b)
-				//fmt.Println(b)
 				if err!=nil{
-					checkError(err)
-					fmt.Println("101")
-					return
+					break
 				}
 				b = b[:n]
-				//fmt.Println("page recv")
-				fmt.Println(b)
 				if err != nil {
-					log.Println(err)
-					return
+					break
 				}
 				//length
 				var buf []byte
+				buf=make([]byte,4)
 				buf = Int32ToBytes(n)
 				_, err = server.Write(buf);
 				_, err = server.Write(b);
 				if err != nil {
 					fmt.Printf("Network Error.Terminating..\n")
-					return
+					break
 				}
 			}
 		}()
 
+		var buf []byte
+		buf = make([]byte, 1024*1024)
 		for {
-			var buf []byte
-			buf = make([]byte, 1024*1024)
 			n, err := server.Read(buf)
 			buf = buf[:n]
-			//num2++
-			fmt.Println(buf)
-			fmt.Println("recv server ")
-			//fmt.Println(buf)
-			//fmt.Println(num2)
 			if err != nil {
 				fmt.Printf("NetworkError.Cancelling...\n")
 				fmt.Println(err.Error())
-				return
+				break
 			}
 			_, err = conn.Write(buf)
 			if err != nil {
 				fmt.Printf("NetworkError.Cancelling...\n")
 				fmt.Println(err.Error())
-				return
+				break
 			}
 		}
 	}()
 	//send to client
-	//fmt.Println("ok")
+
 	var tmpbuf []byte
 	tmpbuf=make([]byte,n)
 	for i:=0;i<n;i++{
@@ -151,8 +143,5 @@ func handleRequest(conn net.Conn){
 	}
 	tmpbuf[1]=0x00
 	_,err=conn.Write(tmpbuf)
-	/*if err!=nil{
-
-	}*/
 }
 

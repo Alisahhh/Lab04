@@ -46,11 +46,8 @@ func handleClientRequest(conn net.Conn){
 		b=make([]byte,4)
 		_,err := conn.Read(b)
 		n:=BytesToInt32(b)
-		//fmt.Println(n)
 		b=make([]byte,n)
 		_, err = conn.Read(b)
-		//b=b[:n]
-		fmt.Println("--------------52------------------")
 		fmt.Println(b)
 		if err != nil {
 			log.Println(err)
@@ -64,8 +61,8 @@ func handleClientRequest(conn net.Conn){
 			switch b[3] {
 			case 0x01: //IP V4
 				zgr.ADDR = net.IPv4(b[4], b[5], b[6], b[7]).String()
-			case 0x03:                       //域名
-				zgr.ADDR = string(b[5: n-2]) //b[4]表示域名的长度
+			case 0x03:
+				zgr.ADDR = string(b[5: n-2])
 			case 0x04: //IP V6
 				zgr.ADDR = net.IP{b[4], b[5], b[6], b[7], b[8], b[9], b[10], b[11], b[12], b[13], b[14], b[15], b[16], b[17], b[18], b[19]}.String()
 			}
@@ -74,21 +71,16 @@ func handleClientRequest(conn net.Conn){
 			fmt.Printf("Protocol implementation error.Terminating...\n")
 			return
 		}
-		//mt.Println(zgr.ADDR)
-		//fmt.Println(zgr.PORT)
 		sconn, err := net.Dial("tcp", net.JoinHostPort(zgr.ADDR, zgr.PORT))
 		if err != nil {
-			//conn.Write([]byte{0x00})
 			log.Println(err)
 			return
 		}
 		defer sconn.Close()
 		fmt.Println(net.JoinHostPort(zgr.ADDR, zgr.PORT))
-		//sconn, err := net.Dial("tcp", "127.0.0.1:80")
 		if err != nil {
-			fmt.Printf("NetworkError.Cancelling...\n 81")
+			fmt.Printf("NetworkError.Cancelling...\n")
 			fmt.Println(err.Error())
-			//delete(conns, addrxport2id(zgr.ADDR, zgr.PORT))
 			return
 		}
 		//send to server
@@ -98,50 +90,41 @@ func handleClientRequest(conn net.Conn){
 				b = make([]byte, 4)
 				_, err := conn.Read(b)
 				n := BytesToInt32(b)
-				//fmt.Println(n)
+				if n==0{
+					break
+				}
 				b = make([]byte, n)
 				_, err = conn.Read(b)
-				//b=b[:n]
-				fmt.Println("--------------97------------------")
 				fmt.Println(b)
 				if err != nil {
 					log.Println(err)
-					return
+					break
 				}
 				_, err = sconn.Write(b)
 				if err != nil {
-					fmt.Printf("NetworkError.Cancelling...103\n")
+					fmt.Printf("NetworkError.Cancelling...\n")
 					fmt.Println(err.Error())
-					//delete(conns, addrxport2id(zgr.ADDR, zgr.PORT))
-					return
+					break
 				}
 			}
 		}()
 		//sent to client
 		for{
-			//fmt.Println("prepare to read")
 			buf:=make([]byte,10240)
 			n,err=sconn.Read(buf)
 			buf=buf[:n]
-			fmt.Println("--------------117------------------")
 			fmt.Println(buf)
-			//fmt.Println("Readok")
 			if err!=nil {
-				fmt.Printf("NetworkError.Cancelling...117\n")
+				fmt.Printf("NetworkError.Cancelling...\n")
 				fmt.Println(err.Error())
-				//delete(conns, addrxport2id(zgr.ADDR, zgr.PORT))
-				return
+				break
 			}
-			//buf=buf[:n]
-			//fmt.Println(buf)
 			n,err=conn.Write(buf)
 			if err!=nil {
-				fmt.Printf("NetworkError.Cancelling...126\n")
+				fmt.Printf("NetworkError.Cancelling...\n")
 				fmt.Println(err.Error())
-				//delete(conns, addrxport2id(zgr.ADDR, zgr.PORT))
-				return
+				break
 			}
-			//fmt.Println("Writeok")
 		}
 }
 

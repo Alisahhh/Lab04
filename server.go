@@ -7,6 +7,7 @@ import (
 	"log"
 	"strconv"
 	"encoding/binary"
+	"time"
 )
 
 type IOpair struct{
@@ -48,7 +49,7 @@ func handleClientRequest(conn net.Conn){
 		n:=BytesToInt32(b)
 		b=make([]byte,n)
 		_, err = conn.Read(b)
-		fmt.Println(b)
+		// fmt.Println(b)
 		if err != nil {
 			log.Println(err)
 			return
@@ -77,7 +78,7 @@ func handleClientRequest(conn net.Conn){
 			return
 		}
 		defer sconn.Close()
-		fmt.Println(net.JoinHostPort(zgr.ADDR, zgr.PORT))
+		//fmt.Println(net.JoinHostPort(zgr.ADDR, zgr.PORT))
 		if err != nil {
 			fmt.Printf("NetworkError.Cancelling...\n")
 			fmt.Println(err.Error())
@@ -95,7 +96,7 @@ func handleClientRequest(conn net.Conn){
 				}
 				b = make([]byte, n)
 				_, err = conn.Read(b)
-				fmt.Println(b)
+				//fmt.Println(b)
 				if err != nil {
 					log.Println(err)
 					break
@@ -109,22 +110,33 @@ func handleClientRequest(conn net.Conn){
 			}
 		}()
 		//sent to client
+		c1 := make(chan []byte, 1)
 		for{
-			buf:=make([]byte,10240)
-			n,err=sconn.Read(buf)
-			buf=buf[:n]
-			fmt.Println(buf)
-			if err!=nil {
-				fmt.Printf("NetworkError.Cancelling...\n")
-				fmt.Println(err.Error())
-				break
+			go func() {
+				buf := make([]byte, 10240)
+				n, err = sconn.Read(buf)
+				buf = buf[:n]
+				//fmt.Println(buf)
+				if err != nil {
+					fmt.Printf("NetworkError.Cancelling...\n")
+					fmt.Println(err.Error())
+					return
+				}
+				c1<-buf
+			}()
+			select{
+				case buf:=<-c1:
+					n,err=conn.Write(buf)
+					if err!=nil {
+						fmt.Printf("NetworkError.Cancelling...\n")
+						fmt.Println(err.Error())
+						break
+					}
+			case <-time.After(20 * time.Second):
+				fmt.Printf("Timed out.Terminating..\n")
+				return
 			}
-			n,err=conn.Write(buf)
-			if err!=nil {
-				fmt.Printf("NetworkError.Cancelling...\n")
-				fmt.Println(err.Error())
-				break
-			}
+
 		}
 }
 
